@@ -1,220 +1,55 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[codz]
-*$py.class
+import shutil
+import argparse
+from pathlib import Path
 
-# C extensions
-*.so
+CATEGORIES = {
+    "Imagens": {".jpg", ".jpeg", ".png", ".gif", ".svg", ".webp"},
+    "Documentos": {".pdf", ".docx", ".txt", ".xlsx", ".pptx", ".csv"},
+    "Compactados": {".zip", ".rar", ".tar", ".gz", ".7z"},
+    "Codigo": {".py", ".js", ".html", ".css", ".json", ".ts", ".sql"},
+    "Executaveis": {".exe", ".msi", ".deb", ".dmg", ".sh"},
+    "Midia": {".mp4", ".mp3", ".wav", ".mkv", ".mov"}
+}
 
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
+def organize_folder(target_dir: Path, dry_run: bool = False):
+    if not target_dir.exists() or not target_dir.is_dir():
+        print(f"Erro: O diretório '{target_dir}' não é válido.")
+        return
 
-# PyInstaller
-#   Usually these files are written by a python script from a template
-#   before PyInstaller builds the exe, so as to inject date/other infos into it.
-*.manifest
-*.spec
+    moved_count = 0
+    for item in target_dir.iterdir():
+        if item.is_dir() or item.name.startswith("."):
+            continue
 
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
+        ext = item.suffix.lower()
+        category = "Outros"
+        for cat_name, extensions in CATEGORIES.items():
+            if ext in extensions:
+                category = cat_name
+                break
 
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py.cover
-*.lcov
-.hypothesis/
-.pytest_cache/
-cover/
+        dest_folder = target_dir / category
+        dest_path = dest_folder / item.name
 
-# Translations
-*.mo
-*.pot
+        if dry_run:
+            print(f"[Simulação] Moveria: {item.name} -> {category}/")
+        else:
+            dest_folder.mkdir(exist_ok=True)
+            # Evita sobrescrever arquivos com o mesmo nome
+            counter = 1
+            while dest_path.exists():
+                dest_path = dest_folder / f"{item.stem}_{counter}{item.suffix}"
+                counter += 1
+            shutil.move(str(item), str(dest_path))
+            print(f"Movido: {item.name} -> {dest_path.relative_to(target_dir)}")
+        moved_count += 1
 
-# Django stuff:
-*.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
+    print(f"\nConcluído! Total de arquivos processados: {moved_count}")
 
-# Flask stuff:
-instance/
-.webassets-cache
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Organiza arquivos de um diretório por categoria.")
+    parser.add_argument("path", type=str, help="Caminho do diretório a ser organizado")
+    parser.add_argument("--dry-run", action="store_true", help="Simula a organização sem mover os arquivos")
+    args = parser.parse_args()
 
-# Scrapy stuff:
-.scrapy
-
-# Sphinx documentation
-docs/_build/
-
-# PyBuilder
-.pybuilder/
-target/
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# IPython
-profile_default/
-ipython_config.py
-
-# pyenv
-#   For a library or package, you might want to ignore these files since the code is
-#   intended to run in multiple environments; otherwise, check them in:
-# .python-version
-
-# pipenv
-#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
-#   However, in case of collaboration, if having platform-specific dependencies or dependencies
-#   having no cross-platform support, pipenv may install dependencies that don't work, or not
-#   install all needed dependencies.
-# Pipfile.lock
-
-# uv
-#   Similar to Pipfile.lock, it is generally recommended to include uv.lock in version control.
-#   This is especially recommended for binary packages to ensure reproducibility, and is more
-#   commonly ignored for libraries.
-# uv.lock
-
-# poetry
-#   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
-#   This is especially recommended for binary packages to ensure reproducibility, and is more
-#   commonly ignored for libraries.
-#   https://python-poetry.org/docs/basic-usage/#commit-your-poetrylock-file-to-version-control
-# poetry.lock
-# poetry.toml
-
-# pdm
-#   Similar to Pipfile.lock, it is generally recommended to include pdm.lock in version control.
-#   pdm recommends including project-wide configuration in pdm.toml, but excluding .pdm-python.
-#   https://pdm-project.org/en/latest/usage/project/#working-with-version-control
-# pdm.lock
-# pdm.toml
-.pdm-python
-.pdm-build/
-
-# pixi
-#   Similar to Pipfile.lock, it is generally recommended to include pixi.lock in version control.
-# pixi.lock
-#   Pixi creates a virtual environment in the .pixi directory, just like venv module creates one
-#   in the .venv directory. It is recommended not to include this directory in version control.
-.pixi/*
-!.pixi/config.toml
-
-# PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
-__pypackages__/
-
-# Celery stuff
-celerybeat-schedule*
-celerybeat.pid
-
-# Redis
-*.rdb
-*.aof
-*.pid
-
-# RabbitMQ
-mnesia/
-rabbitmq/
-rabbitmq-data/
-
-# ActiveMQ
-activemq-data/
-
-# SageMath parsed files
-*.sage.py
-
-# Environments
-.env
-.envrc
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-
-# Spyder project settings
-.spyderproject
-.spyproject
-
-# Rope project settings
-.ropeproject
-
-# mkdocs/Zensical documentation
-/site
-
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-# Pyre type checker
-.pyre/
-
-# pytype static type analyzer
-.pytype/
-
-# Cython debug symbols
-cython_debug/
-
-# PyCharm
-#   JetBrains specific template is maintained in a separate JetBrains.gitignore that can
-#   be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
-#   and can be added to the global gitignore or merged into this file.  For a more nuclear
-#   option (not recommended) you can uncomment the following to ignore the entire idea folder.
-# .idea/
-
-# Abstra
-#   Abstra is an AI-powered process automation framework.
-#   Ignore directories containing user credentials, local state, and settings.
-#   Learn more at https://abstra.io/docs
-.abstra/
-
-# Visual Studio Code
-#   Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore that
-#   can be found at https://github.com/github/gitignore/blob/main/Global/VisualStudioCode.gitignore
-#   and can be added to the global gitignore or merged into this file. However, if you prefer, you
-#   could uncomment the following to ignore the entire vscode folder
-# .vscode/
-# Temporary file for partial code execution
-tempCodeRunnerFile.py
-
-# Ruff stuff:
-.ruff_cache/
-
-# PyPI configuration file
-.pypirc
-
-# Marimo
-marimo/_static/
-marimo/_lsp/
-__marimo__/
-
-# Streamlit
-.streamlit/secrets.toml
+    organize_folder(Path(args.path), args.dry_run)
